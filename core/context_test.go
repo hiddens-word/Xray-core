@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	. "github.com/xtls/xray-core/core"
+	. "github.com/hiddens-word/xray-core/core"
 	_ "unsafe"
 )
 

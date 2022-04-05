@@ -6,19 +6,19 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xtls/xray-core/common/protocol"
-	"github.com/xtls/xray-core/common/serial"
-	. "github.com/xtls/xray-core/infra/conf"
-	"github.com/xtls/xray-core/transport/global"
-	"github.com/xtls/xray-core/transport/internet"
-	"github.com/xtls/xray-core/transport/internet/grpc"
-	"github.com/xtls/xray-core/transport/internet/headers/http"
-	"github.com/xtls/xray-core/transport/internet/headers/noop"
-	"github.com/xtls/xray-core/transport/internet/headers/tls"
-	"github.com/xtls/xray-core/transport/internet/kcp"
-	"github.com/xtls/xray-core/transport/internet/quic"
-	"github.com/xtls/xray-core/transport/internet/tcp"
-	"github.com/xtls/xray-core/transport/internet/websocket"
+	"github.com/hiddens-word/xray-core/common/protocol"
+	"github.com/hiddens-word/xray-core/common/serial"
+	. "github.com/hiddens-word/xray-core/infra/conf"
+	"github.com/hiddens-word/xray-core/transport/global"
+	"github.com/hiddens-word/xray-core/transport/internet"
+	"github.com/hiddens-word/xray-core/transport/internet/grpc"
+	"github.com/hiddens-word/xray-core/transport/internet/headers/http"
+	"github.com/hiddens-word/xray-core/transport/internet/headers/noop"
+	"github.com/hiddens-word/xray-core/transport/internet/headers/tls"
+	"github.com/hiddens-word/xray-core/transport/internet/kcp"
+	"github.com/hiddens-word/xray-core/transport/internet/quic"
+	"github.com/hiddens-word/xray-core/transport/internet/tcp"
+	"github.com/hiddens-word/xray-core/transport/internet/websocket"
 )
 
 func TestSocketConfig(t *testing.T) {

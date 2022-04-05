@@ -9,18 +9,18 @@ import (
 
 	"golang.org/x/net/dns/dnsmessage"
 
-	"github.com/xtls/xray-core/common"
-	"github.com/xtls/xray-core/common/log"
-	"github.com/xtls/xray-core/common/net"
-	"github.com/xtls/xray-core/common/protocol/dns"
-	udp_proto "github.com/xtls/xray-core/common/protocol/udp"
-	"github.com/xtls/xray-core/common/session"
-	"github.com/xtls/xray-core/common/signal/pubsub"
-	"github.com/xtls/xray-core/common/task"
-	"github.com/xtls/xray-core/core"
-	dns_feature "github.com/xtls/xray-core/features/dns"
-	"github.com/xtls/xray-core/features/routing"
-	"github.com/xtls/xray-core/transport/internet/udp"
+	"github.com/hiddens-word/xray-core/common"
+	"github.com/hiddens-word/xray-core/common/log"
+	"github.com/hiddens-word/xray-core/common/net"
+	"github.com/hiddens-word/xray-core/common/protocol/dns"
+	udp_proto "github.com/hiddens-word/xray-core/common/protocol/udp"
+	"github.com/hiddens-word/xray-core/common/session"
+	"github.com/hiddens-word/xray-core/common/signal/pubsub"
+	"github.com/hiddens-word/xray-core/common/task"
+	"github.com/hiddens-word/xray-core/core"
+	dns_feature "github.com/hiddens-word/xray-core/features/dns"
+	"github.com/hiddens-word/xray-core/features/routing"
+	"github.com/hiddens-word/xray-core/transport/internet/udp"
 )
 
 // ClassicNameServer implemented traditional UDP DNS.

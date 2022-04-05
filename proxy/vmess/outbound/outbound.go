@@ -1,6 +1,6 @@
 package outbound
 
-//go:generate go run github.com/xtls/xray-core/common/errors/errorgen
+//go:generate go run github.com/hiddens-word/xray-core/common/errors/errorgen
 
 import (
 	"context"
@@ -9,23 +9,23 @@ import (
 	"hash/crc64"
 	"time"
 
-	"github.com/xtls/xray-core/common"
-	"github.com/xtls/xray-core/common/buf"
-	"github.com/xtls/xray-core/common/net"
-	"github.com/xtls/xray-core/common/platform"
-	"github.com/xtls/xray-core/common/protocol"
-	"github.com/xtls/xray-core/common/retry"
-	"github.com/xtls/xray-core/common/session"
-	"github.com/xtls/xray-core/common/signal"
-	"github.com/xtls/xray-core/common/task"
-	"github.com/xtls/xray-core/common/xudp"
-	core "github.com/xtls/xray-core/core"
-	"github.com/xtls/xray-core/features/policy"
-	"github.com/xtls/xray-core/proxy/vmess"
-	"github.com/xtls/xray-core/proxy/vmess/encoding"
-	"github.com/xtls/xray-core/transport"
-	"github.com/xtls/xray-core/transport/internet"
-	"github.com/xtls/xray-core/transport/internet/stat"
+	"github.com/hiddens-word/xray-core/common"
+	"github.com/hiddens-word/xray-core/common/buf"
+	"github.com/hiddens-word/xray-core/common/net"
+	"github.com/hiddens-word/xray-core/common/platform"
+	"github.com/hiddens-word/xray-core/common/protocol"
+	"github.com/hiddens-word/xray-core/common/retry"
+	"github.com/hiddens-word/xray-core/common/session"
+	"github.com/hiddens-word/xray-core/common/signal"
+	"github.com/hiddens-word/xray-core/common/task"
+	"github.com/hiddens-word/xray-core/common/xudp"
+	core "github.com/hiddens-word/xray-core/core"
+	"github.com/hiddens-word/xray-core/features/policy"
+	"github.com/hiddens-word/xray-core/proxy/vmess"
+	"github.com/hiddens-word/xray-core/proxy/vmess/encoding"
+	"github.com/hiddens-word/xray-core/transport"
+	"github.com/hiddens-word/xray-core/transport/internet"
+	"github.com/hiddens-word/xray-core/transport/internet/stat"
 )
 
 // Handler is an outbound connection handler for VMess protocol.

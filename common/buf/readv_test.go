@@ -11,9 +11,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/xtls/xray-core/common"
-	. "github.com/xtls/xray-core/common/buf"
-	"github.com/xtls/xray-core/testing/servers/tcp"
+	"github.com/hiddens-word/xray-core/common"
+	. "github.com/hiddens-word/xray-core/common/buf"
+	"github.com/hiddens-word/xray-core/testing/servers/tcp"
 )
 
 func TestReadvReader(t *testing.T) {

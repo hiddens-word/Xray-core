@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/xtls/xray-core/common/log"
-	"github.com/xtls/xray-core/common/net"
+	"github.com/hiddens-word/xray-core/common/log"
+	"github.com/hiddens-word/xray-core/common/net"
 )
 
 type testLogger struct {

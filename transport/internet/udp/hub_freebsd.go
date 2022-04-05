@@ -8,8 +8,8 @@ import (
 	"encoding/gob"
 	"io"
 
-	"github.com/xtls/xray-core/common/net"
-	"github.com/xtls/xray-core/transport/internet"
+	"github.com/hiddens-word/xray-core/common/net"
+	"github.com/hiddens-word/xray-core/transport/internet"
 )
 
 // RetrieveOriginalDest from stored laddr, caddr

@@ -8,18 +8,18 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/xtls/xray-core/common"
-	"github.com/xtls/xray-core/common/buf"
-	"github.com/xtls/xray-core/common/net"
-	"github.com/xtls/xray-core/common/protocol"
-	"github.com/xtls/xray-core/common/protocol/tls/cert"
-	"github.com/xtls/xray-core/common/serial"
-	"github.com/xtls/xray-core/testing/servers/udp"
-	"github.com/xtls/xray-core/transport/internet"
-	"github.com/xtls/xray-core/transport/internet/headers/wireguard"
-	"github.com/xtls/xray-core/transport/internet/quic"
-	"github.com/xtls/xray-core/transport/internet/stat"
-	"github.com/xtls/xray-core/transport/internet/tls"
+	"github.com/hiddens-word/xray-core/common"
+	"github.com/hiddens-word/xray-core/common/buf"
+	"github.com/hiddens-word/xray-core/common/net"
+	"github.com/hiddens-word/xray-core/common/protocol"
+	"github.com/hiddens-word/xray-core/common/protocol/tls/cert"
+	"github.com/hiddens-word/xray-core/common/serial"
+	"github.com/hiddens-word/xray-core/testing/servers/udp"
+	"github.com/hiddens-word/xray-core/transport/internet"
+	"github.com/hiddens-word/xray-core/transport/internet/headers/wireguard"
+	"github.com/hiddens-word/xray-core/transport/internet/quic"
+	"github.com/hiddens-word/xray-core/transport/internet/stat"
+	"github.com/hiddens-word/xray-core/transport/internet/tls"
 )
 
 func TestQuicConnection(t *testing.T) {

@@ -9,9 +9,9 @@ import (
 	"github.com/miekg/dns"
 	"golang.org/x/net/dns/dnsmessage"
 
-	"github.com/xtls/xray-core/common"
-	"github.com/xtls/xray-core/common/net"
-	dns_feature "github.com/xtls/xray-core/features/dns"
+	"github.com/hiddens-word/xray-core/common"
+	"github.com/hiddens-word/xray-core/common/net"
+	dns_feature "github.com/hiddens-word/xray-core/features/dns"
 )
 
 func Test_parseResponse(t *testing.T) {

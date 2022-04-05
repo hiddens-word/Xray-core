@@ -8,10 +8,10 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 
-	"github.com/xtls/xray-core/common/buf"
-	xnet "github.com/xtls/xray-core/common/net"
-	"github.com/xtls/xray-core/common/net/cnc"
-	"github.com/xtls/xray-core/common/signal/done"
+	"github.com/hiddens-word/xray-core/common/buf"
+	xnet "github.com/hiddens-word/xray-core/common/net"
+	"github.com/hiddens-word/xray-core/common/net/cnc"
+	"github.com/hiddens-word/xray-core/common/signal/done"
 )
 
 type HunkConn interface {

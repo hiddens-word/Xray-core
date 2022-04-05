@@ -3,12 +3,12 @@ package toml
 import (
 	"io"
 
-	"github.com/xtls/xray-core/common"
-	"github.com/xtls/xray-core/common/cmdarg"
-	"github.com/xtls/xray-core/core"
-	"github.com/xtls/xray-core/infra/conf"
-	"github.com/xtls/xray-core/infra/conf/serial"
-	"github.com/xtls/xray-core/main/confloader"
+	"github.com/hiddens-word/xray-core/common"
+	"github.com/hiddens-word/xray-core/common/cmdarg"
+	"github.com/hiddens-word/xray-core/core"
+	"github.com/hiddens-word/xray-core/infra/conf"
+	"github.com/hiddens-word/xray-core/infra/conf/serial"
+	"github.com/hiddens-word/xray-core/main/confloader"
 )
 
 func init() {

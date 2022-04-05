@@ -1,6 +1,6 @@
 package encoding
 
-//go:generate go run github.com/xtls/xray-core/common/errors/errorgen
+//go:generate go run github.com/hiddens-word/xray-core/common/errors/errorgen
 
 import (
 	"context"
@@ -9,16 +9,16 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/xtls/xray-core/common/buf"
-	"github.com/xtls/xray-core/common/errors"
-	"github.com/xtls/xray-core/common/net"
-	"github.com/xtls/xray-core/common/protocol"
-	"github.com/xtls/xray-core/common/session"
-	"github.com/xtls/xray-core/common/signal"
-	"github.com/xtls/xray-core/features/stats"
-	"github.com/xtls/xray-core/proxy/vless"
-	"github.com/xtls/xray-core/transport/internet/stat"
-	"github.com/xtls/xray-core/transport/internet/xtls"
+	"github.com/hiddens-word/xray-core/common/buf"
+	"github.com/hiddens-word/xray-core/common/errors"
+	"github.com/hiddens-word/xray-core/common/net"
+	"github.com/hiddens-word/xray-core/common/protocol"
+	"github.com/hiddens-word/xray-core/common/session"
+	"github.com/hiddens-word/xray-core/common/signal"
+	"github.com/hiddens-word/xray-core/features/stats"
+	"github.com/hiddens-word/xray-core/proxy/vless"
+	"github.com/hiddens-word/xray-core/transport/internet/stat"
+	"github.com/hiddens-word/xray-core/transport/internet/xtls"
 )
 
 const (

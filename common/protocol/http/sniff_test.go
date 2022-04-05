@@ -3,7 +3,7 @@ package http_test
 import (
 	"testing"
 
-	. "github.com/xtls/xray-core/common/protocol/http"
+	. "github.com/hiddens-word/xray-core/common/protocol/http"
 )
 
 func TestHTTPHeaders(t *testing.T) {
