@@ -29,14 +29,17 @@ import (
 type Server struct {
 	config        *ServerConfig
 	policyManager policy.Manager
+	validator     *Validator
 }
 
 // NewServer creates a new HTTP inbound handler.
 func NewServer(ctx context.Context, config *ServerConfig) (*Server, error) {
+	validator := new(Validator)
 	v := core.MustFromContext(ctx)
 	s := &Server{
 		config:        config,
 		policyManager: v.GetFeature(policy.ManagerType()).(policy.Manager),
+		validator:     validator,
 	}
 
 	return s, nil
@@ -108,7 +111,7 @@ Start:
 
 	if len(s.config.Accounts) > 0 {
 		user, pass, ok := parseBasicAuth(request.Header.Get("Proxy-Authorization"))
-		if !ok || !s.config.HasAccount(user, pass) {
+		if !ok || !s.validator.HasAccount(user, pass) {
 			return common.Error2(conn.Write([]byte("HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm=\"proxy\"\r\n\r\n")))
 		}
 		if inbound != nil {
@@ -155,6 +158,16 @@ Start:
 	}
 
 	return err
+}
+
+// AddUser implements proxy.UserManager.AddUser().
+func (s *Server) AddUser(ctx context.Context, u *protocol.MemoryUser) error {
+	return s.validator.Add(u)
+}
+
+// RemoveUser implements proxy.UserManager.RemoveUser().
+func (s *Server) RemoveUser(ctx context.Context, e string) error {
+	return s.validator.Del(e)
 }
 
 func (s *Server) handleConnect(ctx context.Context, _ *http.Request, reader *bufio.Reader, conn stat.Connection, dest net.Destination, dispatcher routing.Dispatcher, inbound *session.Inbound) error {
