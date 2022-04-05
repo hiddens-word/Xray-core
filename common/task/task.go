@@ -3,7 +3,7 @@ package task
 import (
 	"context"
 
-	"github.com/hiddens-word/xray-core/common/signal/semaphore"
+	"github.com/xtls/xray-core/common/signal/semaphore"
 )
 
 // OnSuccess executes g() after f() returns nil.

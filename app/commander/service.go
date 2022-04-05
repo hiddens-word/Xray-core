@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/hiddens-word/xray-core/common"
+	"github.com/xtls/xray-core/common"
 )
 
 // Service is a Commander service.

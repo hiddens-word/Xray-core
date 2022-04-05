@@ -9,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hiddens-word/xray-core/common/net"
-	"github.com/hiddens-word/xray-core/common/ocsp"
-	"github.com/hiddens-word/xray-core/common/platform/filesystem"
-	"github.com/hiddens-word/xray-core/common/protocol/tls/cert"
-	"github.com/hiddens-word/xray-core/transport/internet"
+	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/ocsp"
+	"github.com/xtls/xray-core/common/platform/filesystem"
+	"github.com/xtls/xray-core/common/protocol/tls/cert"
+	"github.com/xtls/xray-core/transport/internet"
 )
 
 var globalSessionCache = tls.NewLRUClientSessionCache(128)

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/hiddens-word/xray-core/common/dice"
-	"github.com/hiddens-word/xray-core/common/protocol"
+	"github.com/xtls/xray-core/common/dice"
+	"github.com/xtls/xray-core/common/protocol"
 )
 
 // Validator stores valid Shadowsocks users.

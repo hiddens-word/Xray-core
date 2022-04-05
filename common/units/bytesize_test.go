@@ -3,7 +3,7 @@ package units_test
 import (
 	"testing"
 
-	"github.com/hiddens-word/xray-core/common/units"
+	"github.com/xtls/xray-core/common/units"
 )
 
 func TestByteSizes(t *testing.T) {

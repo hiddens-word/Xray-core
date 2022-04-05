@@ -3,9 +3,9 @@ package pipe
 import (
 	"context"
 
-	"github.com/hiddens-word/xray-core/common/signal"
-	"github.com/hiddens-word/xray-core/common/signal/done"
-	"github.com/hiddens-word/xray-core/features/policy"
+	"github.com/xtls/xray-core/common/signal"
+	"github.com/xtls/xray-core/common/signal/done"
+	"github.com/xtls/xray-core/features/policy"
 )
 
 // Option for creating new Pipes.

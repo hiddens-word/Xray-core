@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hiddens-word/xray-core/app/router"
-	"github.com/hiddens-word/xray-core/common/errors"
-	"github.com/hiddens-word/xray-core/common/net"
-	"github.com/hiddens-word/xray-core/common/strmatcher"
-	"github.com/hiddens-word/xray-core/core"
-	"github.com/hiddens-word/xray-core/features/dns"
-	"github.com/hiddens-word/xray-core/features/routing"
+	"github.com/xtls/xray-core/app/router"
+	"github.com/xtls/xray-core/common/errors"
+	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/strmatcher"
+	"github.com/xtls/xray-core/core"
+	"github.com/xtls/xray-core/features/dns"
+	"github.com/xtls/xray-core/features/routing"
 )
 
 // Server is the interface for Name Server.

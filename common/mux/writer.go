@@ -1,11 +1,11 @@
 package mux
 
 import (
-	"github.com/hiddens-word/xray-core/common"
-	"github.com/hiddens-word/xray-core/common/buf"
-	"github.com/hiddens-word/xray-core/common/net"
-	"github.com/hiddens-word/xray-core/common/protocol"
-	"github.com/hiddens-word/xray-core/common/serial"
+	"github.com/xtls/xray-core/common"
+	"github.com/xtls/xray-core/common/buf"
+	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/protocol"
+	"github.com/xtls/xray-core/common/serial"
 )
 
 type Writer struct {

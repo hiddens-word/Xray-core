@@ -10,15 +10,15 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/hiddens-word/xray-core/app/dispatcher"
-	"github.com/hiddens-word/xray-core/app/proxyman"
-	"github.com/hiddens-word/xray-core/common"
-	"github.com/hiddens-word/xray-core/common/net"
-	"github.com/hiddens-word/xray-core/common/serial"
-	core "github.com/hiddens-word/xray-core/core"
-	"github.com/hiddens-word/xray-core/proxy/freedom"
-	"github.com/hiddens-word/xray-core/testing/servers/tcp"
-	"github.com/hiddens-word/xray-core/testing/servers/udp"
+	"github.com/xtls/xray-core/app/dispatcher"
+	"github.com/xtls/xray-core/app/proxyman"
+	"github.com/xtls/xray-core/common"
+	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/serial"
+	core "github.com/xtls/xray-core/core"
+	"github.com/xtls/xray-core/proxy/freedom"
+	"github.com/xtls/xray-core/testing/servers/tcp"
+	"github.com/xtls/xray-core/testing/servers/udp"
 )
 
 func xor(b []byte) []byte {

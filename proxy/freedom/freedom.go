@@ -1,26 +1,26 @@
 package freedom
 
-//go:generate go run github.com/hiddens-word/xray-core/common/errors/errorgen
+//go:generate go run github.com/xtls/xray-core/common/errors/errorgen
 
 import (
 	"context"
 	"time"
 
-	"github.com/hiddens-word/xray-core/common"
-	"github.com/hiddens-word/xray-core/common/buf"
-	"github.com/hiddens-word/xray-core/common/dice"
-	"github.com/hiddens-word/xray-core/common/net"
-	"github.com/hiddens-word/xray-core/common/retry"
-	"github.com/hiddens-word/xray-core/common/session"
-	"github.com/hiddens-word/xray-core/common/signal"
-	"github.com/hiddens-word/xray-core/common/task"
-	"github.com/hiddens-word/xray-core/core"
-	"github.com/hiddens-word/xray-core/features/dns"
-	"github.com/hiddens-word/xray-core/features/policy"
-	"github.com/hiddens-word/xray-core/features/stats"
-	"github.com/hiddens-word/xray-core/transport"
-	"github.com/hiddens-word/xray-core/transport/internet"
-	"github.com/hiddens-word/xray-core/transport/internet/stat"
+	"github.com/xtls/xray-core/common"
+	"github.com/xtls/xray-core/common/buf"
+	"github.com/xtls/xray-core/common/dice"
+	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/retry"
+	"github.com/xtls/xray-core/common/session"
+	"github.com/xtls/xray-core/common/signal"
+	"github.com/xtls/xray-core/common/task"
+	"github.com/xtls/xray-core/core"
+	"github.com/xtls/xray-core/features/dns"
+	"github.com/xtls/xray-core/features/policy"
+	"github.com/xtls/xray-core/features/stats"
+	"github.com/xtls/xray-core/transport"
+	"github.com/xtls/xray-core/transport/internet"
+	"github.com/xtls/xray-core/transport/internet/stat"
 )
 
 func init() {

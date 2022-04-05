@@ -6,13 +6,13 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/hiddens-word/xray-core/common/mux"
-	"github.com/hiddens-word/xray-core/common/net"
-	"github.com/hiddens-word/xray-core/common/session"
-	"github.com/hiddens-word/xray-core/common/task"
-	"github.com/hiddens-word/xray-core/features/routing"
-	"github.com/hiddens-word/xray-core/transport"
-	"github.com/hiddens-word/xray-core/transport/pipe"
+	"github.com/xtls/xray-core/common/mux"
+	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/session"
+	"github.com/xtls/xray-core/common/task"
+	"github.com/xtls/xray-core/features/routing"
+	"github.com/xtls/xray-core/transport"
+	"github.com/xtls/xray-core/transport/pipe"
 )
 
 // Bridge is a component in reverse proxy, that relays connections from Portal to local address.

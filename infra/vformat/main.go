@@ -184,7 +184,7 @@ func main() {
 
 	goimportsArgs := []string{
 		"-w",
-		"-local", "github.com/hiddens-word/xray-core",
+		"-local", "github.com/xtls/xray-core",
 	}
 
 	RunMany(gofmt, gofmtArgs, rawFilesSlice)

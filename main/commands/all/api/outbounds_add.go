@@ -3,10 +3,10 @@ package api
 import (
 	"fmt"
 
-	handlerService "github.com/hiddens-word/xray-core/app/proxyman/command"
-	"github.com/hiddens-word/xray-core/infra/conf"
-	"github.com/hiddens-word/xray-core/infra/conf/serial"
-	"github.com/hiddens-word/xray-core/main/commands/base"
+	handlerService "github.com/xtls/xray-core/app/proxyman/command"
+	"github.com/xtls/xray-core/infra/conf"
+	"github.com/xtls/xray-core/infra/conf/serial"
+	"github.com/xtls/xray-core/main/commands/base"
 )
 
 var cmdAddOutbounds = &base.Command{

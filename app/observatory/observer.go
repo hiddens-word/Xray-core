@@ -11,15 +11,15 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/hiddens-word/xray-core/common"
-	v2net "github.com/hiddens-word/xray-core/common/net"
-	"github.com/hiddens-word/xray-core/common/session"
-	"github.com/hiddens-word/xray-core/common/signal/done"
-	"github.com/hiddens-word/xray-core/common/task"
-	"github.com/hiddens-word/xray-core/core"
-	"github.com/hiddens-word/xray-core/features/extension"
-	"github.com/hiddens-word/xray-core/features/outbound"
-	"github.com/hiddens-word/xray-core/transport/internet/tagged"
+	"github.com/xtls/xray-core/common"
+	v2net "github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/session"
+	"github.com/xtls/xray-core/common/signal/done"
+	"github.com/xtls/xray-core/common/task"
+	"github.com/xtls/xray-core/core"
+	"github.com/xtls/xray-core/features/extension"
+	"github.com/xtls/xray-core/features/outbound"
+	"github.com/xtls/xray-core/transport/internet/tagged"
 )
 
 type Observer struct {

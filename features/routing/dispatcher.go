@@ -3,9 +3,9 @@ package routing
 import (
 	"context"
 
-	"github.com/hiddens-word/xray-core/common/net"
-	"github.com/hiddens-word/xray-core/features"
-	"github.com/hiddens-word/xray-core/transport"
+	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/features"
+	"github.com/xtls/xray-core/transport"
 )
 
 // Dispatcher is a feature that dispatches inbound requests to outbound handlers based on rules.

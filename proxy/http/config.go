@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/hiddens-word/xray-core/common/protocol"
+	"github.com/xtls/xray-core/common/protocol"
 )
 
 func (a *Account) Equals(another protocol.Account) bool {
@@ -15,14 +15,14 @@ func (a *Account) AsAccount() (protocol.Account, error) {
 	return a, nil
 }
 
-//func (sc *ServerConfig) HasAccount(username, password string) bool {
-//	if sc.Accounts == nil {
-//		return false
-//	}
-//
-//	p, found := sc.Accounts[username]
-//	if !found {
-//		return false
-//	}
-//	return p == password
-//}
+func (sc *ServerConfig) HasAccount(username, password string) bool {
+	if sc.Accounts == nil {
+		return false
+	}
+
+	p, found := sc.Accounts[username]
+	if !found {
+		return false
+	}
+	return p == password
+}

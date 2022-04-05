@@ -5,10 +5,10 @@ import (
 	"io"
 	"math/rand"
 
-	"github.com/hiddens-word/xray-core/common"
-	"github.com/hiddens-word/xray-core/common/buf"
-	"github.com/hiddens-word/xray-core/common/bytespool"
-	"github.com/hiddens-word/xray-core/common/protocol"
+	"github.com/xtls/xray-core/common"
+	"github.com/xtls/xray-core/common/buf"
+	"github.com/xtls/xray-core/common/bytespool"
+	"github.com/xtls/xray-core/common/protocol"
 )
 
 type BytesGenerator func() []byte

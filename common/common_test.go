@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/hiddens-word/xray-core/common"
+	. "github.com/xtls/xray-core/common"
 )
 
 func TestMust(t *testing.T) {

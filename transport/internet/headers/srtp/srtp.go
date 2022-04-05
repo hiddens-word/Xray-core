@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/binary"
 
-	"github.com/hiddens-word/xray-core/common"
-	"github.com/hiddens-word/xray-core/common/dice"
+	"github.com/xtls/xray-core/common"
+	"github.com/xtls/xray-core/common/dice"
 )
 
 type SRTP struct {

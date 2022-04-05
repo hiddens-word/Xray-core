@@ -5,11 +5,11 @@ import (
 
 	utls "github.com/refraction-networking/utls"
 
-	"github.com/hiddens-word/xray-core/common/buf"
-	"github.com/hiddens-word/xray-core/common/net"
+	"github.com/xtls/xray-core/common/buf"
+	"github.com/xtls/xray-core/common/net"
 )
 
-//go:generate go run github.com/hiddens-word/xray-core/common/errors/errorgen
+//go:generate go run github.com/xtls/xray-core/common/errors/errorgen
 
 var _ buf.Writer = (*Conn)(nil)
 

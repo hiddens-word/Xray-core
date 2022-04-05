@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/hiddens-word/xray-core/common"
+	"github.com/xtls/xray-core/common"
 )
 
 // Channel is an implementation of stats.Channel.

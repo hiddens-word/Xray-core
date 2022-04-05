@@ -1,11 +1,11 @@
 package dns
 
 import (
-	"github.com/hiddens-word/xray-core/common"
-	"github.com/hiddens-word/xray-core/common/net"
-	"github.com/hiddens-word/xray-core/common/strmatcher"
-	"github.com/hiddens-word/xray-core/features"
-	"github.com/hiddens-word/xray-core/features/dns"
+	"github.com/xtls/xray-core/common"
+	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/strmatcher"
+	"github.com/xtls/xray-core/features"
+	"github.com/xtls/xray-core/features/dns"
 )
 
 // StaticHosts represents static domain-ip mapping in DNS server.
