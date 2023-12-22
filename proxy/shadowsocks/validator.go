@@ -10,11 +10,10 @@ import (
 	"sync"
 )
 
-// Validator stores valid Shadowsocks users, caches AEAD ciphers, and provides user validation.
+// Validator stores valid Shadowsocks users.
 type Validator struct {
 	sync.RWMutex
-	users     map[string]*protocol.MemoryUser
-	aeadCache sync.Map // Concurrent map to store AEAD ciphers
+	users map[string]*protocol.MemoryUser
 
 	behaviorSeed  uint64
 	behaviorFused bool
@@ -32,17 +31,20 @@ func (v *Validator) Add(u *protocol.MemoryUser) error {
 		return newError("The cipher is not support Single-port Multi-user")
 	}
 
+	// Initialize the map if it's nil
 	if v.users == nil {
 		v.users = make(map[string]*protocol.MemoryUser)
 	}
 
+	// Ensure email is in lowercase
 	email := strings.ToLower(u.Email)
 	if _, exists := v.users[email]; exists {
+		// If the user already exists, return an error
 		return newError("User already exists.")
 	}
 
+	// Add the user to the map
 	v.users[email] = u
-	// No need to modify the AEAD cache or behaviorSeed on Add
 
 	return nil
 }
@@ -57,65 +59,22 @@ func (v *Validator) Del(email string) error {
 	defer v.Unlock()
 
 	email = strings.ToLower(email)
-	user, found := v.users[email]
-	if !found {
+	if _, found := v.users[email]; !found {
 		return newError("User ", email, " not found.")
 	}
 
 	delete(v.users, email)
 
-	// Clear all associated AEAD ciphers from the cache for this user
-	account := user.Account.(*MemoryAccount)
-	v.aeadCache.Range(func(key, value interface{}) bool {
-		subkey := key.(string)
-		if strings.HasPrefix(subkey, string(account.Key)) {
-			v.aeadCache.Delete(subkey)
-		}
-		return true
-	})
-
-	// Recompute behaviorSeed if it has been fused
-	if v.behaviorFused {
-		v.behaviorSeed = v.computeBehaviorSeed()
-	}
-
 	return nil
 }
 
 // Get a Shadowsocks user.
-// ... Existing Get method logic ...
-
-// GetBehaviorSeed returns the behavior seed.
-func (v *Validator) GetBehaviorSeed() uint64 {
-	v.Lock()
-	defer v.Unlock()
-
-	if !v.behaviorFused {
-		v.behaviorFused = true
-		v.behaviorSeed = v.computeBehaviorSeed()
-	}
-	return v.behaviorSeed
-}
-
-// computeBehaviorSeed computes a new behavior seed based on the current users' keys.
-func (v *Validator) computeBehaviorSeed() uint64 {
-	var seed uint64
-	for _, user := range v.users {
-		account := user.Account.(*MemoryAccount)
-		hashkdf := hmac.New(sha256.New, []byte("SSBSKDF"))
-		hashkdf.Write(account.Key)
-		seed = crc64.Update(seed, crc64.MakeTable(crc64.ECMA), hashkdf.Sum(nil))
-	}
-	return seed
-}
-
 func (v *Validator) Get(bs []byte, command protocol.RequestCommand) (u *protocol.MemoryUser, aead cipher.AEAD, ret []byte, ivLen int32, err error) {
 	v.RLock()
 	defer v.RUnlock()
 
 	for _, user := range v.users {
-		account := user.Account.(*MemoryAccount)
-		if account.Cipher.IsAEAD() {
+		if account := user.Account.(*MemoryAccount); account.Cipher.IsAEAD() {
 			if len(bs) < 32 {
 				continue
 			}
@@ -123,29 +82,20 @@ func (v *Validator) Get(bs []byte, command protocol.RequestCommand) (u *protocol
 			aeadCipher := account.Cipher.(*AEADCipher)
 			ivLen = aeadCipher.IVSize()
 			iv := bs[:ivLen]
-			subkey := make([]byte, aeadCipher.KeyBytes)
-			// Use hkdfSHA1 to derive a subkey from the user's key and the IV.
+			subkey := make([]byte, 32)
+			subkey = subkey[:aeadCipher.KeyBytes]
 			hkdfSHA1(account.Key, iv, subkey)
+			aead = aeadCipher.AEADAuthCreator(subkey)
 
-			// Retrieve or create an AEAD instance from the cache.
-			aead, err = v.GetOrCreateAEAD(subkey, account)
-			if err != nil {
-				return nil, nil, nil, 0, err
-			}
-
-			// Use the AEAD instance to decrypt the payload.
-			var payload []byte
 			switch command {
 			case protocol.RequestCommandTCP:
-				payload = bs[ivLen : ivLen+18] // Adjust length as needed for your protocol.
+				data := make([]byte, 4+aead.NonceSize())
+				ret, err = aead.Open(data[:0], data[4:], bs[ivLen:ivLen+18], nil)
 			case protocol.RequestCommandUDP:
-				payload = bs[ivLen:] // Adjust as necessary for UDP payload.
-			default:
-				err = newError("unsupported command")
-				return
+				data := make([]byte, 8192)
+				ret, err = aead.Open(data[:0], data[8192-aead.NonceSize():8192], bs[ivLen:], nil)
 			}
 
-			ret, err = aead.Open(nil, iv, payload, nil)
 			if err == nil {
 				u = user
 				err = account.CheckIV(iv)
@@ -164,22 +114,20 @@ func (v *Validator) Get(bs []byte, command protocol.RequestCommand) (u *protocol
 	return
 }
 
-// NewAEAD creates a new AEAD cipher based on the given subkey and account.
-func NewAEAD(subkey []byte, account *MemoryAccount) (cipher.AEAD, error) {
-	aeadCipher := account.Cipher.(*AEADCipher)
-	return aeadCipher.AEADAuthCreator(subkey), nil
-}
+func (v *Validator) GetBehaviorSeed() uint64 {
+	v.Lock()
+	defer v.Unlock()
 
-// GetOrCreateAEAD attempts to retrieve an AEAD cipher from cache or creates a new one if not present.
-func (v *Validator) GetOrCreateAEAD(subkey []byte, account *MemoryAccount) (cipher.AEAD, error) {
-	cacheKey := string(subkey)
-	if val, ok := v.aeadCache.Load(cacheKey); ok {
-		return val.(cipher.AEAD), nil
+	if !v.behaviorFused {
+		v.behaviorFused = true
+		if v.behaviorSeed == 0 {
+			for _, user := range v.users {
+				account := user.Account.(*MemoryAccount)
+				hashkdf := hmac.New(sha256.New, []byte("SSBSKDF"))
+				hashkdf.Write(account.Key)
+				v.behaviorSeed = crc64.Update(v.behaviorSeed, crc64.MakeTable(crc64.ECMA), hashkdf.Sum(nil))
+			}
+		}
 	}
-	aead, err := NewAEAD(subkey, account)
-	if err != nil {
-		return nil, err
-	}
-	v.aeadCache.Store(cacheKey, aead)
-	return aead, nil
+	return v.behaviorSeed
 }
