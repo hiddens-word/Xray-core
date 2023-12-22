@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/lucas-clemente/quic-go"
-
+	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/logging"
+	"github.com/quic-go/quic-go/qlog"
 	"github.com/xtls/xray-core/common"
 	"github.com/xtls/xray-core/common/net"
 	"github.com/xtls/xray-core/common/protocol/tls/cert"
@@ -17,22 +18,22 @@ import (
 // Listener is an internet.Listener that listens for TCP connections.
 type Listener struct {
 	rawConn  *sysConn
-	listener quic.Listener
+	listener *quic.Listener
 	done     *done.Instance
 	addConn  internet.ConnHandler
 }
 
-func (l *Listener) acceptStreams(session quic.Session) {
+func (l *Listener) acceptStreams(conn quic.Connection) {
 	for {
-		stream, err := session.AcceptStream(context.Background())
+		stream, err := conn.AcceptStream(context.Background())
 		if err != nil {
 			newError("failed to accept stream").Base(err).WriteToLog()
 			select {
-			case <-session.Context().Done():
+			case <-conn.Context().Done():
 				return
 			case <-l.done.Wait():
-				if err := session.CloseWithError(0, ""); err != nil {
-					newError("failed to close session").Base(err).WriteToLog()
+				if err := conn.CloseWithError(0, ""); err != nil {
+					newError("failed to close connection").Base(err).WriteToLog()
 				}
 				return
 			default:
@@ -43,8 +44,8 @@ func (l *Listener) acceptStreams(session quic.Session) {
 
 		conn := &interConn{
 			stream: stream,
-			local:  session.LocalAddr(),
-			remote: session.RemoteAddr(),
+			local:  conn.LocalAddr(),
+			remote: conn.RemoteAddr(),
 		}
 
 		l.addConn(conn)
@@ -55,7 +56,7 @@ func (l *Listener) keepAccepting() {
 	for {
 		conn, err := l.listener.Accept(context.Background())
 		if err != nil {
-			newError("failed to accept QUIC sessions").Base(err).WriteToLog()
+			newError("failed to accept QUIC connection").Base(err).WriteToLog()
 			if l.done.Done() {
 				break
 			}
@@ -102,10 +103,14 @@ func Listen(ctx context.Context, address net.Address, port net.Port, streamSetti
 	}
 
 	quicConfig := &quic.Config{
-		ConnectionIDLength:    12,
-		KeepAlive:             false,
+		KeepAlivePeriod:       0,
+		HandshakeIdleTimeout:  time.Second * 8,
+		MaxIdleTimeout:        time.Second * 300,
 		MaxIncomingStreams:    32,
 		MaxIncomingUniStreams: -1,
+		Tracer: func(ctx context.Context, p logging.Perspective, ci quic.ConnectionID) *logging.ConnectionTracer {
+			return qlog.NewConnectionTracer(&QlogWriter{connID: ci}, p, ci)
+		},
 	}
 
 	conn, err := wrapSysConn(rawConn.(*net.UDPConn), config)
@@ -113,8 +118,11 @@ func Listen(ctx context.Context, address net.Address, port net.Port, streamSetti
 		conn.Close()
 		return nil, err
 	}
-
-	qListener, err := quic.Listen(conn, tlsConfig.GetTLSConfig(), quicConfig)
+	tr := quic.Transport{
+		ConnectionIDLength: 12,
+		Conn:               conn,
+	}
+	qListener, err := tr.Listen(tlsConfig.GetTLSConfig(), quicConfig)
 	if err != nil {
 		conn.Close()
 		return nil, err

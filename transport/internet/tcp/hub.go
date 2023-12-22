@@ -6,26 +6,24 @@ import (
 	"strings"
 	"time"
 
-	goxtls "github.com/xtls/go"
-
+	goreality "github.com/xtls/reality"
 	"github.com/xtls/xray-core/common"
 	"github.com/xtls/xray-core/common/net"
 	"github.com/xtls/xray-core/common/session"
 	"github.com/xtls/xray-core/transport/internet"
+	"github.com/xtls/xray-core/transport/internet/reality"
 	"github.com/xtls/xray-core/transport/internet/stat"
 	"github.com/xtls/xray-core/transport/internet/tls"
-	"github.com/xtls/xray-core/transport/internet/xtls"
 )
 
 // Listener is an internet.Listener that listens for TCP connections.
 type Listener struct {
-	listener   net.Listener
-	tlsConfig  *gotls.Config
-	xtlsConfig *goxtls.Config
-	authConfig internet.ConnectionAuthenticator
-	config     *Config
-	addConn    internet.ConnHandler
-	locker     *internet.FileLocker // for unix domain socket
+	listener      net.Listener
+	tlsConfig     *gotls.Config
+	realityConfig *goreality.Config
+	authConfig    internet.ConnectionAuthenticator
+	config        *Config
+	addConn       internet.ConnHandler
 }
 
 // ListenTCP creates a new Listener based on configurations.
@@ -39,8 +37,7 @@ func ListenTCP(ctx context.Context, address net.Address, port net.Port, streamSe
 		if streamSettings.SocketSettings == nil {
 			streamSettings.SocketSettings = &internet.SocketConfig{}
 		}
-		streamSettings.SocketSettings.AcceptProxyProtocol =
-			l.config.AcceptProxyProtocol || streamSettings.SocketSettings.AcceptProxyProtocol
+		streamSettings.SocketSettings.AcceptProxyProtocol = l.config.AcceptProxyProtocol || streamSettings.SocketSettings.AcceptProxyProtocol
 	}
 	var listener net.Listener
 	var err error
@@ -53,10 +50,6 @@ func ListenTCP(ctx context.Context, address net.Address, port net.Port, streamSe
 			return nil, newError("failed to listen Unix Domain Socket on ", address).Base(err)
 		}
 		newError("listening Unix Domain Socket on ", address).WriteToLog(session.ExportIDToError(ctx))
-		locker := ctx.Value(address.Domain())
-		if locker != nil {
-			l.locker = locker.(*internet.FileLocker)
-		}
 	} else {
 		listener, err = internet.ListenSystem(ctx, &net.TCPAddr{
 			IP:   address.IP(),
@@ -77,8 +70,8 @@ func ListenTCP(ctx context.Context, address net.Address, port net.Port, streamSe
 	if config := tls.ConfigFromStreamSettings(streamSettings); config != nil {
 		l.tlsConfig = config.GetTLSConfig()
 	}
-	if config := xtls.ConfigFromStreamSettings(streamSettings); config != nil {
-		l.xtlsConfig = config.GetXTLSConfig()
+	if config := reality.ConfigFromStreamSettings(streamSettings); config != nil {
+		l.realityConfig = config.GetREALITYConfig()
 	}
 
 	if tcpSettings.HeaderSettings != nil {
@@ -111,17 +104,20 @@ func (v *Listener) keepAccepting() {
 			}
 			continue
 		}
-
-		if v.tlsConfig != nil {
-			conn = tls.Server(conn, v.tlsConfig)
-		} else if v.xtlsConfig != nil {
-			conn = xtls.Server(conn, v.xtlsConfig)
-		}
-		if v.authConfig != nil {
-			conn = v.authConfig.Server(conn)
-		}
-
-		v.addConn(stat.Connection(conn))
+		go func() {
+			if v.tlsConfig != nil {
+				conn = tls.Server(conn, v.tlsConfig)
+			} else if v.realityConfig != nil {
+				if conn, err = reality.Server(conn, v.realityConfig); err != nil {
+					newError(err).AtInfo().WriteToLog()
+					return
+				}
+			}
+			if v.authConfig != nil {
+				conn = v.authConfig.Server(conn)
+			}
+			v.addConn(stat.Connection(conn))
+		}()
 	}
 }
 
@@ -132,9 +128,6 @@ func (v *Listener) Addr() net.Addr {
 
 // Close implements internet.Listener.Close.
 func (v *Listener) Close() error {
-	if v.locker != nil {
-		v.locker.Release()
-	}
 	return v.listener.Close()
 }
 

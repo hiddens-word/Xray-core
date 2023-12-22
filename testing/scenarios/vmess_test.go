@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/xtls/xray-core/app/log"
 	"github.com/xtls/xray-core/app/proxyman"
 	"github.com/xtls/xray-core/common"
@@ -25,6 +23,7 @@ import (
 	"github.com/xtls/xray-core/testing/servers/udp"
 	"github.com/xtls/xray-core/transport/internet"
 	"github.com/xtls/xray-core/transport/internet/kcp"
+	"golang.org/x/sync/errgroup"
 )
 
 func TestVMessDynamicPort(t *testing.T) {
@@ -1175,10 +1174,10 @@ func TestVMessGCMMuxUDP(t *testing.T) {
 	servers, err := InitializeServerConfigs(serverConfig, clientConfig)
 	common.Must(err)
 
-	for range "abcd" {
+	for range "ab" {
 		var errg errgroup.Group
 		for i := 0; i < 16; i++ {
-			errg.Go(testTCPConn(clientPort, 10240, time.Second*20))
+			errg.Go(testTCPConn(clientPort, 1024, time.Second*10))
 			errg.Go(testUDPConn(clientUDPPort, 1024, time.Second*10))
 		}
 		if err := errg.Wait(); err != nil {

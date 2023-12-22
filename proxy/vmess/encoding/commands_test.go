@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
-
 	"github.com/xtls/xray-core/common"
 	"github.com/xtls/xray-core/common/buf"
 	"github.com/xtls/xray-core/common/protocol"
@@ -17,7 +16,6 @@ func TestSwitchAccount(t *testing.T) {
 	sa := &protocol.CommandSwitchAccount{
 		Port:     1234,
 		ID:       uuid.New(),
-		AlterIds: 1024,
 		Level:    128,
 		ValidMin: 16,
 	}
@@ -41,7 +39,6 @@ func TestSwitchAccountBugOffByOne(t *testing.T) {
 	sa := &protocol.CommandSwitchAccount{
 		Port:     1234,
 		ID:       uuid.New(),
-		AlterIds: 1024,
 		Level:    128,
 		ValidMin: 16,
 	}

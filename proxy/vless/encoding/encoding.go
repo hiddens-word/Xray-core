@@ -3,11 +3,9 @@ package encoding
 //go:generate go run github.com/xtls/xray-core/common/errors/errorgen
 
 import (
+	"bytes"
 	"context"
-	"fmt"
 	"io"
-	"runtime"
-	"syscall"
 
 	"github.com/xtls/xray-core/common/buf"
 	"github.com/xtls/xray-core/common/errors"
@@ -16,9 +14,8 @@ import (
 	"github.com/xtls/xray-core/common/session"
 	"github.com/xtls/xray-core/common/signal"
 	"github.com/xtls/xray-core/features/stats"
+	"github.com/xtls/xray-core/proxy"
 	"github.com/xtls/xray-core/proxy/vless"
-	"github.com/xtls/xray-core/transport/internet/stat"
-	"github.com/xtls/xray-core/transport/internet/xtls"
 )
 
 const (
@@ -176,49 +173,67 @@ func DecodeResponseHeader(reader io.Reader, request *protocol.RequestHeader) (*A
 	return responseAddons, nil
 }
 
-func ReadV(reader buf.Reader, writer buf.Writer, timer signal.ActivityUpdater, conn *xtls.Conn, rawConn syscall.RawConn, counter stats.Counter, sctx context.Context) error {
+// XtlsRead filter and read xtls protocol
+func XtlsRead(reader buf.Reader, writer buf.Writer, timer signal.ActivityUpdater, conn net.Conn, input *bytes.Reader, rawInput *bytes.Buffer, trafficState *proxy.TrafficState, ctx context.Context) error {
+	err := func() error {
+		visionReader := proxy.NewVisionReader(reader, trafficState, ctx)
+		for {
+			if trafficState.ReaderSwitchToDirectCopy {
+				var writerConn net.Conn
+				if inbound := session.InboundFromContext(ctx); inbound != nil && inbound.Conn != nil {
+					writerConn = inbound.Conn
+					if inbound.CanSpliceCopy == 2 {
+						inbound.CanSpliceCopy = 1 // force the value to 1, don't use setter
+					}
+				}
+				return proxy.CopyRawConnIfExist(ctx, conn, writerConn, writer, timer)
+			}
+			buffer, err := visionReader.ReadMultiBuffer()
+			if !buffer.IsEmpty() {
+				timer.Update()
+				if trafficState.ReaderSwitchToDirectCopy {
+					// XTLS Vision processes struct TLS Conn's input and rawInput
+					if inputBuffer, err := buf.ReadFrom(input); err == nil {
+						if !inputBuffer.IsEmpty() {
+							buffer, _ = buf.MergeMulti(buffer, inputBuffer)
+						}
+					}
+					if rawInputBuffer, err := buf.ReadFrom(rawInput); err == nil {
+						if !rawInputBuffer.IsEmpty() {
+							buffer, _ = buf.MergeMulti(buffer, rawInputBuffer)
+						}
+					}
+				}
+				if werr := writer.WriteMultiBuffer(buffer); werr != nil {
+					return werr
+				}
+			}
+			if err != nil {
+				return err
+			}
+		}
+	}()
+	if err != nil && errors.Cause(err) != io.EOF {
+		return err
+	}
+	return nil
+}
+
+// XtlsWrite filter and write xtls protocol
+func XtlsWrite(reader buf.Reader, writer buf.Writer, timer signal.ActivityUpdater, conn net.Conn, trafficState *proxy.TrafficState, ctx context.Context) error {
 	err := func() error {
 		var ct stats.Counter
 		for {
-			if conn.DirectIn {
-				conn.DirectIn = false
-				if sctx != nil {
-					if inbound := session.InboundFromContext(sctx); inbound != nil && inbound.Conn != nil {
-						iConn := inbound.Conn
-						statConn, ok := iConn.(*stat.CounterConnection)
-						if ok {
-							iConn = statConn.Connection
-						}
-						if xc, ok := iConn.(*xtls.Conn); ok {
-							iConn = xc.Connection
-						}
-						if tc, ok := iConn.(*net.TCPConn); ok {
-							if conn.SHOW {
-								fmt.Println(conn.MARK, "Splice")
-							}
-							runtime.Gosched() // necessary
-							w, err := tc.ReadFrom(conn.Connection)
-							if counter != nil {
-								counter.Add(w)
-							}
-							if statConn != nil && statConn.WriteCounter != nil {
-								statConn.WriteCounter.Add(w)
-							}
-							return err
-						} else {
-							panic("XTLS Splice: not TCP inbound")
-						}
-					} else {
-						// panic("XTLS Splice: nil inbound or nil inbound.Conn")
-					}
-				}
-				reader = buf.NewReadVReader(conn.Connection, rawConn, nil)
-				ct = counter
-				if conn.SHOW {
-					fmt.Println(conn.MARK, "ReadV")
-				}
-			}
 			buffer, err := reader.ReadMultiBuffer()
+			if trafficState.WriterSwitchToDirectCopy {
+				if inbound := session.InboundFromContext(ctx); inbound != nil && inbound.CanSpliceCopy == 2 {
+					inbound.CanSpliceCopy = 1 // force the value to 1, don't use setter
+				}
+				rawConn, _, writerCounter := proxy.UnwrapRawConn(conn)
+				writer = buf.NewWriter(rawConn)
+				ct = writerCounter
+				trafficState.WriterSwitchToDirectCopy = false
+			}
 			if !buffer.IsEmpty() {
 				if ct != nil {
 					ct.Add(int64(buffer.Len()))

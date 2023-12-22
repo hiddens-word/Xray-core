@@ -15,5 +15,7 @@ func init() {
 		// cmdConvert,
 		tls.CmdTLS,
 		cmdUUID,
+		cmdX25519,
+		cmdWG,
 	)
 }

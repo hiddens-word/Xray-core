@@ -60,6 +60,7 @@ func (w *tcpWorker) callback(conn stat.Connection) {
 	sid := session.NewID()
 	ctx = session.ContextWithID(ctx, sid)
 
+	var outbound = &session.Outbound{}
 	if w.recvOrigDest {
 		var dest net.Destination
 		switch getTProxyType(w.stream) {
@@ -74,11 +75,10 @@ func (w *tcpWorker) callback(conn stat.Connection) {
 			dest = net.DestinationFromAddr(conn.LocalAddr())
 		}
 		if dest.IsValid() {
-			ctx = session.ContextWithOutbound(ctx, &session.Outbound{
-				Target: dest,
-			})
+			outbound.Target = dest
 		}
 	}
+	ctx = session.ContextWithOutbound(ctx, outbound)
 
 	if w.uplinkCounter != nil || w.downlinkCounter != nil {
 		conn = &stat.CounterConnection{
@@ -108,9 +108,7 @@ func (w *tcpWorker) callback(conn stat.Connection) {
 		newError("connection ends").Base(err).WriteToLog(session.ExportIDToError(ctx))
 	}
 	cancel()
-	if err := conn.Close(); err != nil {
-		newError("failed to close connection").Base(err).WriteToLog(session.ExportIDToError(ctx))
-	}
+	conn.Close()
 }
 
 func (w *tcpWorker) Proxy() proxy.Inbound {
@@ -364,7 +362,7 @@ func (w *udpWorker) clean() error {
 	}
 
 	for addr, conn := range w.activeConn {
-		if nowSec-atomic.LoadInt64(&conn.lastActivityTime) > 5*60 { // TODO Timeout too small
+		if nowSec-atomic.LoadInt64(&conn.lastActivityTime) > 2*60 {
 			if !conn.inactive {
 				conn.setInactive()
 				delete(w.activeConn, addr)

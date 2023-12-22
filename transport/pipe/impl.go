@@ -36,6 +36,7 @@ type pipe struct {
 	readSignal  *signal.Notifier
 	writeSignal *signal.Notifier
 	done        *done.Instance
+	errChan     chan error
 	option      pipeOption
 	state       state
 }
@@ -91,6 +92,8 @@ func (p *pipe) ReadMultiBuffer() (buf.MultiBuffer, error) {
 		select {
 		case <-p.readSignal.Wait():
 		case <-p.done.Wait():
+		case err = <-p.errChan:
+			return nil, err
 		}
 	}
 }

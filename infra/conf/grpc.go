@@ -1,9 +1,8 @@
 package conf
 
 import (
-	"github.com/golang/protobuf/proto"
-
 	"github.com/xtls/xray-core/transport/internet/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 type GRPCConfig struct {
@@ -13,6 +12,7 @@ type GRPCConfig struct {
 	HealthCheckTimeout  int32  `json:"health_check_timeout"`
 	PermitWithoutStream bool   `json:"permit_without_stream"`
 	InitialWindowsSize  int32  `json:"initial_windows_size"`
+	UserAgent           string `json:"user_agent"`
 }
 
 func (g *GRPCConfig) Build() (proto.Message, error) {
@@ -34,5 +34,6 @@ func (g *GRPCConfig) Build() (proto.Message, error) {
 		HealthCheckTimeout:  g.HealthCheckTimeout,
 		PermitWithoutStream: g.PermitWithoutStream,
 		InitialWindowsSize:  g.InitialWindowsSize,
+		UserAgent:           g.UserAgent,
 	}, nil
 }

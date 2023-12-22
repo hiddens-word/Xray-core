@@ -8,9 +8,8 @@ import (
 	"net/http"
 	"os"
 
-	"golang.org/x/crypto/ocsp"
-
 	"github.com/xtls/xray-core/common/platform/filesystem"
+	"golang.org/x/crypto/ocsp"
 )
 
 func GetOCSPForFile(path string) ([]byte, error) {
@@ -29,6 +28,9 @@ func GetOCSPStapling(cert [][]byte, path string) ([]byte, error) {
 	ocspData, err := GetOCSPForFile(path)
 	if err != nil {
 		ocspData, err = GetOCSPForCert(cert)
+		if err != nil {
+			return nil, err
+		}
 		if !CheckOCSPFileIsNotExist(path) {
 			err = os.Remove(path)
 			if err != nil {

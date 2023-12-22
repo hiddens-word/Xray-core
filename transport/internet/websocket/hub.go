@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-
 	"github.com/xtls/xray-core/common"
 	"github.com/xtls/xray-core/common/net"
 	http_proto "github.com/xtls/xray-core/common/protocol/http"
@@ -29,8 +28,8 @@ type requestHandler struct {
 var replacer = strings.NewReplacer("+", "-", "/", "_", "=", "")
 
 var upgrader = &websocket.Upgrader{
-	ReadBufferSize:   4 * 1024,
-	WriteBufferSize:  4 * 1024,
+	ReadBufferSize:   0,
+	WriteBufferSize:  0,
 	HandshakeTimeout: time.Second * 4,
 	CheckOrigin: func(r *http.Request) bool {
 		return true
@@ -76,7 +75,6 @@ type Listener struct {
 	listener net.Listener
 	config   *Config
 	addConn  internet.ConnHandler
-	locker   *internet.FileLocker // for unix domain socket
 }
 
 func ListenWS(ctx context.Context, address net.Address, port net.Port, streamSettings *internet.MemoryStreamConfig, addConn internet.ConnHandler) (internet.Listener, error) {
@@ -89,8 +87,7 @@ func ListenWS(ctx context.Context, address net.Address, port net.Port, streamSet
 		if streamSettings.SocketSettings == nil {
 			streamSettings.SocketSettings = &internet.SocketConfig{}
 		}
-		streamSettings.SocketSettings.AcceptProxyProtocol =
-			l.config.AcceptProxyProtocol || streamSettings.SocketSettings.AcceptProxyProtocol
+		streamSettings.SocketSettings.AcceptProxyProtocol = l.config.AcceptProxyProtocol || streamSettings.SocketSettings.AcceptProxyProtocol
 	}
 	var listener net.Listener
 	var err error
@@ -103,10 +100,6 @@ func ListenWS(ctx context.Context, address net.Address, port net.Port, streamSet
 			return nil, newError("failed to listen unix domain socket(for WS) on ", address).Base(err)
 		}
 		newError("listening unix domain socket(for WS) on ", address).WriteToLog(session.ExportIDToError(ctx))
-		locker := ctx.Value(address.Domain())
-		if locker != nil {
-			l.locker = locker.(*internet.FileLocker)
-		}
 	} else { // tcp
 		listener, err = internet.ListenSystem(ctx, &net.TCPAddr{
 			IP:   address.IP(),
@@ -155,9 +148,6 @@ func (ln *Listener) Addr() net.Addr {
 
 // Close implements net.Listener.Close().
 func (ln *Listener) Close() error {
-	if ln.locker != nil {
-		ln.locker.Release()
-	}
 	return ln.listener.Close()
 }
 

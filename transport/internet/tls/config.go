@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -266,6 +267,20 @@ func (c *Config) verifyPeerCert(rawCerts [][]byte, verifiedChains [][]*x509.Cert
 		}
 		return newError("peer cert is unrecognized: ", base64.StdEncoding.EncodeToString(hashValue))
 	}
+
+	if c.PinnedPeerCertificatePublicKeySha256 != nil {
+		for _, v := range verifiedChains {
+			for _, cert := range v {
+				publicHash := GenerateCertPublicKeyHash(cert)
+				for _, c := range c.PinnedPeerCertificatePublicKeySha256 {
+					if hmac.Equal(publicHash, c) {
+						return nil
+					}
+				}
+			}
+		}
+		return newError("peer public key is unrecognized.")
+	}
 	return nil
 }
 
@@ -350,6 +365,15 @@ func (c *Config) GetTLSConfig(opts ...Option) *tls.Config {
 
 	config.PreferServerCipherSuites = c.PreferServerCipherSuites
 
+	if (len(c.MasterKeyLog) > 0 && c.MasterKeyLog != "none") {
+		writer, err := os.OpenFile(c.MasterKeyLog, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+		if err != nil {
+			newError("failed to open ", c.MasterKeyLog, " as master key log").AtError().Base(err).WriteToLog()
+		} else {
+			config.KeyLogWriter = writer
+		}
+	}
+
 	return config
 }
 
@@ -359,8 +383,8 @@ type Option func(*tls.Config)
 // WithDestination sets the server name in TLS config.
 func WithDestination(dest net.Destination) Option {
 	return func(config *tls.Config) {
-		if dest.Address.Family().IsDomain() && config.ServerName == "" {
-			config.ServerName = dest.Address.Domain()
+		if config.ServerName == "" {
+			config.ServerName = dest.Address.String()
 		}
 	}
 }
