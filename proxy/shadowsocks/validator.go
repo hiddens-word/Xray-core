@@ -56,18 +56,12 @@ func (v *Validator) Add(u *protocol.MemoryUser) error {
 
 	// Ensure email is in lowercase
 	email := strings.ToLower(u.Email)
-
-	if _, exists := v.hotUsers.Get(email); exists {
-		return newError("User already exists in hot area.")
-	}
-
 	if _, exists := v.coldUsers[email]; exists {
 		return newError("User already exists in cold area.")
 	}
 
 	// Add the user to the map
 	v.coldUsers[email] = u
-	v.hotUsers.Add(email, u)
 	return nil
 }
 
@@ -98,7 +92,6 @@ func (v *Validator) Del(email string) error {
 func (v *Validator) Get(bs []byte, command protocol.RequestCommand) (u *protocol.MemoryUser, aead cipher.AEAD, ret []byte, ivLen int32, err error) {
 	v.RLock()
 	defer v.RUnlock()
-
 	// 尝试从热区（LRU缓存）获取用户
 	if user, aead, ret, ivLen, err := v.tryDecryptFromCache(bs, command); err == nil {
 		return user, aead, ret, ivLen, nil
@@ -107,16 +100,10 @@ func (v *Validator) Get(bs []byte, command protocol.RequestCommand) (u *protocol
 	// 如果未在热区找到，尝试从冷区获取用户
 	for _, user := range v.coldUsers {
 		if aead, ret, ivLen, err := v.tryDecrypt(user, bs, command); err == nil {
-			// 将用户从冷区移动到热区
-			v.Lock()
 			v.hotUsers.Add(user.Email, user)
-			delete(v.coldUsers, user.Email)
-			v.Unlock()
-
 			return user, aead, ret, ivLen, nil
 		}
 	}
-
 	return nil, nil, nil, 0, ErrNotFound
 }
 
@@ -167,6 +154,7 @@ func (v *Validator) tryDecrypt(user *protocol.MemoryUser, bs []byte, command pro
 	}
 
 	err = account.CheckIV(iv) // CheckIV需要被您自己的函数替换
+
 	return aead, ret, ivLen, err
 }
 
