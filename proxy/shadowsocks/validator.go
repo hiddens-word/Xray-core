@@ -4,16 +4,23 @@ import (
 	"crypto/cipher"
 	"crypto/hmac"
 	"crypto/sha256"
+	"errors"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/xtls/xray-core/common/protocol"
 	"hash/crc64"
 	"strings"
 	"sync"
 )
 
+const (
+	DefaultHotUsersSize = 1000
+)
+
 // Validator stores valid Shadowsocks users.
 type Validator struct {
 	sync.RWMutex
-	users map[string]*protocol.MemoryUser
+	hotUsers  *lru.Cache
+	coldUsers map[string]*protocol.MemoryUser
 
 	behaviorSeed  uint64
 	behaviorFused bool
@@ -21,31 +28,46 @@ type Validator struct {
 
 var ErrNotFound = newError("Not Found")
 
+func NewValidator(cacheSize int) (*Validator, error) {
+	cache, err := lru.New(cacheSize)
+	if err != nil {
+		return nil, err
+	}
+	return &Validator{
+		hotUsers:  cache,
+		coldUsers: make(map[string]*protocol.MemoryUser),
+	}, nil
+}
+
 // Add a Shadowsocks user.
 func (v *Validator) Add(u *protocol.MemoryUser) error {
 	v.Lock()
 	defer v.Unlock()
 
 	account := u.Account.(*MemoryAccount)
-	if !account.Cipher.IsAEAD() && len(v.users) > 0 {
+	if !account.Cipher.IsAEAD() && len(v.coldUsers) > 0 {
 		return newError("The cipher is not support Single-port Multi-user")
 	}
 
 	// Initialize the map if it's nil
-	if v.users == nil {
-		v.users = make(map[string]*protocol.MemoryUser)
+	if v.coldUsers == nil {
+		v.coldUsers = make(map[string]*protocol.MemoryUser)
 	}
 
 	// Ensure email is in lowercase
 	email := strings.ToLower(u.Email)
-	if _, exists := v.users[email]; exists {
-		// If the user already exists, return an error
-		return newError("User already exists.")
+
+	if _, exists := v.hotUsers.Get(email); exists {
+		return newError("User already exists in hot area.")
+	}
+
+	if _, exists := v.coldUsers[email]; exists {
+		return newError("User already exists in cold area.")
 	}
 
 	// Add the user to the map
-	v.users[email] = u
-
+	v.coldUsers[email] = u
+	v.hotUsers.Add(email, u)
 	return nil
 }
 
@@ -59,59 +81,93 @@ func (v *Validator) Del(email string) error {
 	defer v.Unlock()
 
 	email = strings.ToLower(email)
-	if _, found := v.users[email]; !found {
+
+	if v.hotUsers.Contains(email) {
+		v.hotUsers.Remove(email)
+	}
+
+	if _, found := v.coldUsers[email]; !found {
 		return newError("User ", email, " not found.")
 	}
 
-	delete(v.users, email)
+	delete(v.coldUsers, email)
 
 	return nil
 }
 
-// Get a Shadowsocks user.
 func (v *Validator) Get(bs []byte, command protocol.RequestCommand) (u *protocol.MemoryUser, aead cipher.AEAD, ret []byte, ivLen int32, err error) {
 	v.RLock()
 	defer v.RUnlock()
 
-	for _, user := range v.users {
-		if account := user.Account.(*MemoryAccount); account.Cipher.IsAEAD() {
-			if len(bs) < 32 {
-				continue
-			}
+	// 尝试从热区（LRU缓存）获取用户
+	if user, aead, ret, ivLen, err := v.tryDecryptFromCache(bs, command); err == nil {
+		return user, aead, ret, ivLen, nil
+	}
 
-			aeadCipher := account.Cipher.(*AEADCipher)
-			ivLen = aeadCipher.IVSize()
-			iv := bs[:ivLen]
-			subkey := make([]byte, 32)
-			subkey = subkey[:aeadCipher.KeyBytes]
-			hkdfSHA1(account.Key, iv, subkey)
-			aead = aeadCipher.AEADAuthCreator(subkey)
+	// 如果未在热区找到，尝试从冷区获取用户
+	for _, user := range v.coldUsers {
+		if aead, ret, ivLen, err := v.tryDecrypt(user, bs, command); err == nil {
+			// 将用户从冷区移动到热区
+			v.Lock()
+			v.hotUsers.Add(user.Email, user)
+			delete(v.coldUsers, user.Email)
+			v.Unlock()
 
-			switch command {
-			case protocol.RequestCommandTCP:
-				data := make([]byte, 4+aead.NonceSize())
-				ret, err = aead.Open(data[:0], data[4:], bs[ivLen:ivLen+18], nil)
-			case protocol.RequestCommandUDP:
-				data := make([]byte, 8192)
-				ret, err = aead.Open(data[:0], data[8192-aead.NonceSize():8192], bs[ivLen:], nil)
-			}
-
-			if err == nil {
-				u = user
-				err = account.CheckIV(iv)
-				return
-			}
-		} else {
-			// The following line is commented out because Non-AEAD ciphers might not use an IV.
-			// err = user.Account.(*MemoryAccount).CheckIV(bs[:ivLen]) // The IV size of None Cipher is 0.
-			u = user
-			ivLen = user.Account.(*MemoryAccount).Cipher.IVSize()
-			return
+			return user, aead, ret, ivLen, nil
 		}
 	}
 
-	err = ErrNotFound
-	return
+	return nil, nil, nil, 0, ErrNotFound
+}
+
+// _tryDecryptFromCache 尝试从LRU缓存中解密和验证用户
+func (v *Validator) tryDecryptFromCache(bs []byte, command protocol.RequestCommand) (u *protocol.MemoryUser, aead cipher.AEAD, ret []byte, ivLen int32, err error) {
+	for _, key := range v.hotUsers.Keys() {
+		if user, ok := v.hotUsers.Peek(key); ok {
+			if aead, ret, ivLen, err := v.tryDecrypt(user.(*protocol.MemoryUser), bs, command); err == nil {
+				return user.(*protocol.MemoryUser), aead, ret, ivLen, nil
+			}
+		}
+	}
+	return nil, nil, nil, 0, ErrNotFound
+}
+
+// _tryDecrypt 尝试解密和验证给定的用户
+func (v *Validator) tryDecrypt(user *protocol.MemoryUser, bs []byte, command protocol.RequestCommand) (aead cipher.AEAD, ret []byte, ivLen int32, err error) {
+	account := user.Account.(*MemoryAccount)
+	if !account.Cipher.IsAEAD() {
+		// 非AEAD密码逻辑
+		// ...
+		return nil, nil, 0, ErrNotFound
+	}
+
+	if len(bs) < 32 {
+		return nil, nil, 0, errors.New("payload too short for AEAD")
+	}
+
+	aeadCipher := account.Cipher.(*AEADCipher)
+	ivLen = aeadCipher.IVSize()
+	iv := bs[:ivLen]
+	subkey := make([]byte, 32)
+	subkey = subkey[:aeadCipher.KeyBytes]
+	hkdfSHA1(account.Key, iv, subkey)         // hkdfSHA1需要被您自己的函数替换
+	aead = aeadCipher.AEADAuthCreator(subkey) // AEADAuthCreator是一个示例函数名，需要替换成您的实际函数
+
+	switch command {
+	case protocol.RequestCommandTCP:
+		data := make([]byte, 4+aead.NonceSize())
+		ret, err = aead.Open(data[:0], data[4:], bs[ivLen:ivLen+18], nil)
+	case protocol.RequestCommandUDP:
+		data := make([]byte, 8192)
+		ret, err = aead.Open(data[:0], data[8192-aead.NonceSize():8192], bs[ivLen:], nil)
+	}
+
+	if err != nil {
+		return nil, nil, ivLen, err
+	}
+
+	err = account.CheckIV(iv) // CheckIV需要被您自己的函数替换
+	return aead, ret, ivLen, err
 }
 
 func (v *Validator) GetBehaviorSeed() uint64 {
@@ -121,7 +177,7 @@ func (v *Validator) GetBehaviorSeed() uint64 {
 	if !v.behaviorFused {
 		v.behaviorFused = true
 		if v.behaviorSeed == 0 {
-			for _, user := range v.users {
+			for _, user := range v.coldUsers {
 				account := user.Account.(*MemoryAccount)
 				hashkdf := hmac.New(sha256.New, []byte("SSBSKDF"))
 				hashkdf.Write(account.Key)

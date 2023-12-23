@@ -29,7 +29,10 @@ type Server struct {
 
 // NewServer create a new Shadowsocks server.
 func NewServer(ctx context.Context, config *ServerConfig) (*Server, error) {
-	validator := new(Validator)
+	validator, err := NewValidator(DefaultHotUsersSize)
+	if err != nil {
+		return nil, newError("failed to init validator").Base(err).AtError()
+	}
 	for _, user := range config.Users {
 		u, err := user.ToMemoryUser()
 		if err != nil {
@@ -74,7 +77,7 @@ func (s *Server) Process(ctx context.Context, network net.Network, conn stat.Con
 	inbound := session.InboundFromContext(ctx)
 	inbound.Name = "shadowsocks"
 	inbound.SetCanSpliceCopy(3)
-	
+
 	switch network {
 	case net.Network_TCP:
 		return s.handleConnection(ctx, conn, dispatcher)
